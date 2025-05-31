@@ -70,6 +70,30 @@ namespace YallaR7la.Controllers
         #endregion
 
 
+        #region Get Admin Info
+        
+            [HttpGet("GetAdminInfo")]
+            [Authorize]
+            
+            public async Task<IActionResult> GetAdminInfo()
+            {
+                var currutAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (currutAdminId == null)
+                    return Forbid("You don't have acess !");
+                var admin =await _appDbContext.Admins.Where(a => a.AdminId == currutAdminId).Select(a => new
+                {
+                    a.Name,
+                    a.Email,
+                    a.PhoneNumper,
+                    a.ImageData
+                }).FirstOrDefaultAsync();
+            
+                if (admin == null) return NotFound("This Admo not found!");
+            
+                return Ok(admin);
+            }
+        
+        #endregion 
 
         #region Get All Admin
         [HttpGet("GetAllAdmin")]
