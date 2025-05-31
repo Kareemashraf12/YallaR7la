@@ -606,7 +606,12 @@ namespace YallaR7la.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            // Check if email already exists
+            var emailExists = await _appDbContext.Admins
+                .AnyAsync(a => a.Email == mdlAdmin.Email);
+        
+            if (emailExists)
+                return Conflict("An admin with this email already exists.");
             using var stream = new MemoryStream();
             await mdlAdmin.ImageData.CopyToAsync(stream);
 
