@@ -59,6 +59,73 @@ namespace YallaR7la.Controllers
         #endregion
 
 
+         #region Edit User Info
+
+             [HttpPut("EditUserInfo")]
+             [Authorize]
+             public async Task<IActionResult> EditUserInfo([FromForm] MdlUser mdlUser)
+             {
+                 var currutUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                 if (currutUserId == null)
+                     return Unauthorized("This user is not authorized!");
+            
+                 var user = await _appDbContext.Users.FindAsync(currutUserId);
+                 if (user == null)
+                     return NotFound("User not found!");
+            
+                
+                 user.Name = mdlUser.Name;
+                 user.Email = mdlUser.Email;
+                 user.City = mdlUser.City;
+                 user.Prefrance = mdlUser.Prefrance;
+                 user.PhoneNumber = mdlUser.PhoneNumper;
+                 user.BirthDate = mdlUser.BirthDate;
+            
+                 
+                 if (mdlUser.ImageData != null && mdlUser.ImageData.Length > 0)
+                 {
+                     using (var ms = new MemoryStream())
+                     {
+                         await mdlUser.ImageData.CopyToAsync(ms);
+                         user.ImageData = ms.ToArray();
+                     }
+                 }
+                
+                 await _appDbContext.SaveChangesAsync();
+            
+                 return Ok("User profile updated successfully.");
+             }
+            
+            
+            
+         #endregion
+
+
+        #region Get User Info
+            [HttpGet("GetUserInfo")]
+            [Authorize]
+            public async Task<IActionResult> GetUserInfo()
+            {
+                var curruntUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (curruntUserId == null)
+                    return NotFound("This User is not found!");
+            
+                var userInfo = await _appDbContext.Users.Where(o => o.Id == curruntUserId).Select(u => new
+                {
+                    u.Name,
+                    u.Email,
+                    u.City,
+                    u.Age,
+                    u.Prefrance,
+                    u.ImageData
+                    
+                }).FirstOrDefaultAsync();
+            
+                return Ok(userInfo);
+            
+            }
+        
+        #endregion
 
         // i don't remember why this is found !!!!
         #region Regestriation
