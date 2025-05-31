@@ -31,7 +31,8 @@ namespace YallaR7la.Controllers
                     d.Name,
                     d.Category,
                     d.Description,
-                    AverageRating = d.AverageRating
+                    AverageRating = d.AverageRating,
+                    
                 })
                 .OrderByDescending(d => d.AverageRating)
                 .ToListAsync();
@@ -108,7 +109,7 @@ namespace YallaR7la.Controllers
                     d.Name,
                     d.Description,
                     d.Category,
-                    AverageRating = d.AverageRating,
+                    d.AverageRating,
                     d.Location,
                     d.Cost
                 })
