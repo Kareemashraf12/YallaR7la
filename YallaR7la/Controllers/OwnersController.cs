@@ -67,7 +67,99 @@ namespace YallaR7la.Controllers
 
         #endregion
 
+         #region Get Owner Info
+             [HttpGet("GetOwnerInfo")]
+             [Authorize]
+             public async Task<IActionResult> GetOwnerInfo ()
+             {
+                 var currentOwnerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                 if (currentOwnerId == null)
+                     return NotFound("There is error in your token !");
+                 var ownerinfo = await _appDbContext.BusinessOwners.Where(o => o.BusinessOwnerId == currentOwnerId).Select(o => new
+                 {
+                     o.Name,
+                     o.Email,
+                     o.PhoneNumper,
+                     o.ImageData
+                 }).FirstOrDefaultAsync();
+            
+                 if (ownerinfo == null)
+                     return NotFound("This Owner is not found!");
+            
+                 return Ok(ownerinfo);
+             }
+        
+         #endregion
 
+
+            #region Update Owner 
+            
+                [HttpPut("UpdateOwner/{ownerId}")]
+                [Authorize]
+                public async Task<IActionResult> UpdateOwner( [FromForm] MdlOwner mdlOwner)
+                {
+                    var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var owner = await _appDbContext.BusinessOwners.FirstOrDefaultAsync(o => o.BusinessOwnerId == ownerId);
+                    if (owner == null)
+                    {
+                        return NotFound(new { Message = "This Owner was not found!" });
+                    }
+                
+                    var existingData = new
+                    {
+                        owner.Name,
+                        owner.Email,
+                        owner.PhoneNumper,
+                        owner.ImageData
+                        
+                    };
+                
+                    if (mdlOwner.Name == null && mdlOwner.Email == null && mdlOwner.PhoneNumper == null && mdlOwner.ImageData == null)
+                    {
+                        return Ok(new
+                        {
+                            Message = "Current owner data retrieved successfully!",
+                            ExistingData = existingData
+                        });
+                    }
+                
+                    // Save old image if new one not provided
+                    byte[] oldImageData = owner.ImageData;
+                
+                    // Update fields if new data is provided
+                    owner.Name = !string.IsNullOrEmpty(mdlOwner.Name) ? mdlOwner.Name : owner.Name;
+                    owner.Email = !string.IsNullOrEmpty(mdlOwner.Email) ? mdlOwner.Email : owner.Email;
+                    owner.PhoneNumper = !string.IsNullOrEmpty(mdlOwner.PhoneNumper) ? mdlOwner.PhoneNumper : owner.PhoneNumper;
+                
+                    if (mdlOwner.ImageData != null && mdlOwner.ImageData.Length > 0)
+                    {
+                        using var stream = new MemoryStream();
+                        await mdlOwner.ImageData.CopyToAsync(stream);
+                        owner.ImageData = stream.ToArray();
+                    }
+                    else
+                    {
+                        owner.ImageData = oldImageData;
+                    }
+                
+                    _appDbContext.BusinessOwners.Update(owner);
+                    await _appDbContext.SaveChangesAsync();
+                
+                    return Ok(new
+                    {
+                        Message = "Owner data updated successfully!",
+                        UpdatedData = new
+                        {
+                            owner.Name,
+                            owner.Email,
+                            owner.PhoneNumper,
+                            owner.ImageData
+                        }
+                    });
+                }
+            
+            #endregion
+         
         #region Get DestinationByOwnerId
 
         [HttpGet("GetDestinationsWithImagesByOwner/{ownerId}")]
